@@ -1,0 +1,3 @@
+export const WHEEL_SPIN_DURATION_MS = 4000;
+export const WHEEL_SPIN_FALLBACK_MS = 4500;
+export const TOAST_DURATION_MS = 5000;
