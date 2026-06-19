@@ -3,13 +3,15 @@ export type QuestionCoinValue = (typeof QUESTION_COIN_VALUES)[number];
 
 export const REWARD_COIN_VALUES = [30, 40, 50, 60, 70, 80, 90, 100] as const;
 export type RewardCoinValue = (typeof REWARD_COIN_VALUES)[number];
+export const REWARD_TYPES = ["SELLABLE", "UNSELLABLE"] as const;
+export type RewardType = (typeof REWARD_TYPES)[number];
 
 export const POWER_UP_TYPES = [
   "DOUBLE_BALANCE_ON_CORRECT",
   "HALVE_BALANCE_ON_INCORRECT",
-  "MYSTERY_GIFT",
   "BONUS_ON_CORRECT",
-  "DISABLE_SELLING_ON_INCORRECT",
+  "DOUBLE_SPIN_COST_ON_INCORRECT",
+  "HALVE_SPIN_COST_ON_CORRECT",
 ] as const;
 export type PowerUpType = (typeof POWER_UP_TYPES)[number];
 
@@ -41,6 +43,7 @@ export type RewardConfig = {
   name: string;
   description: string;
   coinValue: RewardCoinValue;
+  type: RewardType;
 };
 
 export type GameConfig = {

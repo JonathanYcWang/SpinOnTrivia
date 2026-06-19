@@ -7,7 +7,6 @@ import { QUESTION_COIN_VALUES } from "@/features/config/configTypes";
 import { sortRewards } from "@/lib/sorting";
 import type { GameState } from "./gameTypes";
 
-const SPIN_COST = 20;
 const SALES_TAX = 0.5;
 
 export function getTopicById(config: GameConfig, topicId: string) {
@@ -99,7 +98,7 @@ export function getSellValue(reward: RewardConfig) {
 
 export function canSpin(config: GameConfig, state: GameState) {
   return (
-    state.playerCoins >= SPIN_COST &&
+    state.playerCoins >= state.nextSpinCost &&
     getAvailableWheelRewards(config, state).length > 0 &&
     !state.isWheelSpinning
   );
@@ -119,9 +118,9 @@ export function canBuyReward(state: GameState, reward: RewardConfig) {
 
 export function canSellReward(state: GameState, reward: RewardConfig) {
   return (
+    reward.type !== "UNSELLABLE" &&
     state.ownedRewardIds.includes(reward.id) &&
     !state.soldRewardIds.includes(reward.id) &&
-    !state.isSellingLocked &&
     !state.isWheelSpinning
   );
 }
@@ -131,14 +130,16 @@ export function isGameOver(config: GameConfig, state: GameState): boolean {
   if (availableWheelRewards.length === 0) return true;
 
   const unansweredQuestions = getUnansweredQuestions(config, state);
-  const ownedRewards = getOwnedRewards(config, state);
+  const sellableOwnedRewards = getOwnedRewards(config, state).filter(
+    (reward) => reward.type !== "UNSELLABLE",
+  );
   const buyableRewardExists = getShopBuyRewards(config, state).some(
     (reward) => reward.coinValue <= state.playerCoins,
   );
 
   return (
     unansweredQuestions.length === 0 &&
-    ownedRewards.length === 0 &&
+    sellableOwnedRewards.length === 0 &&
     state.playerCoins < 5 &&
     !buyableRewardExists
   );

@@ -1,5 +1,5 @@
 import type { GameConfig } from "@/features/config/configTypes";
-import type { GameState } from "./gameTypes";
+import { BASE_SPIN_COST, type GameState } from "./gameTypes";
 
 export function initializeGameState(config: GameConfig): GameState {
   return {
@@ -24,7 +24,6 @@ export function initializeGameState(config: GameConfig): GameState {
     wheelRotationDeg: 0,
     correctStreakCount: 0,
     isStreakBonusActive: false,
-    isSellingLocked: false,
-    isMysteryGiftDiscovered: false,
+    nextSpinCost: BASE_SPIN_COST,
   };
 }

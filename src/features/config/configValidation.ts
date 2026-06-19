@@ -1,13 +1,15 @@
-import { gameData } from "./Data";
+import gameData from "./game-data.json";
 import {
   QUESTION_COIN_VALUES,
   POWER_UP_TYPES,
   REWARD_COIN_VALUES,
+  REWARD_TYPES,
   type GameConfig,
   type PowerUpConfig,
   type PowerUpType,
   type QuestionCoinValue,
   type RewardCoinValue,
+  type RewardType,
 } from "./configTypes";
 
 export type FieldError = {
@@ -15,6 +17,10 @@ export type FieldError = {
   field: string;
   message: string;
 };
+
+export type GameDataValidationResult =
+  | { valid: true; data: unknown; config: GameConfig }
+  | { valid: false; fieldErrors: FieldError[] };
 
 export type ConfigValidationResult =
   | { valid: true; config: GameConfig }
@@ -40,6 +46,7 @@ type RawReward = {
   id: unknown;
   name: unknown;
   value: unknown;
+  type?: unknown;
 };
 
 function isQuestionCoinValue(value: unknown): value is QuestionCoinValue {
@@ -48,6 +55,10 @@ function isQuestionCoinValue(value: unknown): value is QuestionCoinValue {
 
 function isRewardCoinValue(value: unknown): value is RewardCoinValue {
   return REWARD_COIN_VALUES.includes(value as RewardCoinValue);
+}
+
+function isRewardType(value: unknown): value is RewardType {
+  return REWARD_TYPES.includes(value as RewardType);
 }
 
 function isPowerUpType(value: unknown): value is PowerUpType {
@@ -341,6 +352,16 @@ export function validateGameData(value: unknown): ConfigValidationResult {
           ),
         );
       }
+
+      if (reward.type !== undefined && !isRewardType(reward.type)) {
+        fieldErrors.push(
+          fieldError(
+            rewardId,
+            "type",
+            "Reward type must be a supported value.",
+          ),
+        );
+      }
     });
   }
 
@@ -350,6 +371,14 @@ export function validateGameData(value: unknown): ConfigValidationResult {
     valid: true,
     config: gameDataToConfig(value),
   };
+}
+
+export function validateEditableGameData(
+  value: unknown,
+): GameDataValidationResult {
+  const validation = validateGameData(value);
+  if (!validation.valid) return validation;
+  return { valid: true, data: value, config: validation.config };
 }
 
 function gameDataToConfig(value: Record<string, unknown>): GameConfig {
@@ -388,6 +417,7 @@ function gameDataToConfig(value: Record<string, unknown>): GameConfig {
     name: trimString(reward.name),
     description: "",
     coinValue: reward.value as RewardCoinValue,
+    type: isRewardType(reward.type) ? reward.type : "SELLABLE",
   }));
 
   return {

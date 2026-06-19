@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { gameData } from "./Data";
+import gameData from "./game-data.json";
 import { validateGameData } from "./configValidation";
 
 function cloneGameData() {
@@ -66,10 +66,35 @@ describe("game data validation", () => {
     }
   });
 
+  it("accepts supported reward types", () => {
+    const data = cloneGameData();
+    (data.rewards[0] as { type?: string }).type = "UNSELLABLE";
+    const result = validateGameData(data);
+    expect(result.valid).toBe(true);
+    if (result.valid) {
+      expect(result.config.rewards[0].type).toBe("UNSELLABLE");
+    }
+  });
+
+  it("rejects unknown reward types", () => {
+    const data = cloneGameData();
+    (data.rewards[0] as { type?: string }).type = "LIMITED";
+    const result = validateGameData(data);
+    expect(result.valid).toBe(false);
+    if (!result.valid) {
+      expect(result.fieldErrors.map((error) => error.field)).toContain("type");
+    }
+  });
+
   it("accepts valid power-up types", () => {
     const data = cloneGameData();
     (data.board.columns[0].cells[0] as { powerUp?: { type: string } }).powerUp = {
-      type: "DOUBLE_BALANCE_ON_CORRECT",
+      type: "DOUBLE_SPIN_COST_ON_INCORRECT",
+    };
+    expect(validateGameData(data).valid).toBe(true);
+
+    (data.board.columns[0].cells[0] as { powerUp?: { type: string } }).powerUp = {
+      type: "HALVE_SPIN_COST_ON_CORRECT",
     };
     expect(validateGameData(data).valid).toBe(true);
   });
@@ -87,4 +112,13 @@ describe("game data validation", () => {
       );
     }
   });
+
+  it("rejects removed mystery gift power-up type", () => {
+    const data = cloneGameData();
+    (data.board.columns[0].cells[0] as { powerUp?: { type: string } }).powerUp = {
+      type: "MYSTERY_GIFT",
+    };
+    expect(validateGameData(data).valid).toBe(false);
+  });
+
 });

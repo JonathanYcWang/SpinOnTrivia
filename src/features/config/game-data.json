@@ -1,0 +1,472 @@
+{
+  "version": 2,
+  "board": {
+    "columns": [
+      {
+        "id": "topic-food",
+        "title": "Food",
+        "x": 0,
+        "cells": [
+          {
+            "id": "question-food-5",
+            "coordinate": {
+              "x": 0,
+              "y": 0
+            },
+            "value": 10,
+            "question": "What are the two main types of toro served?",
+            "answer": "Chutoro and otoro."
+          },
+          {
+            "id": "question-food-10",
+            "coordinate": {
+              "x": 0,
+              "y": 1
+            },
+            "value": 20,
+            "question": "Name 10 types of cheese.",
+            "answer": "Cheddar, Mozzarella, Parmesan, Swiss, Gouda, Brie, Feta, Provolone, Monterey Jack, Blue cheese, Ricotta, Cottage cheese, Goat cheese, Pepper Jack, Havarti, Gruyere, Camembert, Mascarpone."
+          },
+          {
+            "id": "question-food-15",
+            "coordinate": {
+              "x": 0,
+              "y": 2
+            },
+            "value": 30,
+            "question": "How many points does it take to reach Silver status at Haidilao?",
+            "answer": "2000.",
+            "powerUp": {
+              "type": "DOUBLE_SPIN_COST_ON_INCORRECT"
+            }
+          },
+          {
+            "id": "question-food-20",
+            "coordinate": {
+              "x": 0,
+              "y": 3
+            },
+            "value": 40,
+            "question": "Currently over or under 35.5 restaurants in Toronto with a Michelin star or Bib",
+            "answer": "https://guide.michelin.com/ca/en/ontario/toronto/restaurants"
+          }
+        ]
+      },
+      {
+        "id": "topic-basketball",
+        "title": "Basketball",
+        "x": 1,
+        "cells": [
+          {
+            "id": "question-basketball-5",
+            "coordinate": {
+              "x": 1,
+              "y": 0
+            },
+            "value": 10,
+            "question": "Name 5 players who played in the NBA finals.",
+            "answer": "(Check Live)"
+          },
+          {
+            "id": "question-basketball-10",
+            "coordinate": {
+              "x": 1,
+              "y": 1
+            },
+            "value": 20,
+            "powerUp": {
+              "type": "DOUBLE_BALANCE_ON_CORRECT"
+            },
+            "question": "What are the names of one player at each position from my top 15 ranking?",
+            "answer": "PG: Curry, Magic, Paul.\nSG: Jordan, Kobe, Wade\nSF: Lebron Durant Bird\nPF: Duncan, Garnett, Dirk\nC: Kareem, Hakeem, Shaq"
+          },
+          {
+            "id": "question-basketball-15",
+            "coordinate": {
+              "x": 1,
+              "y": 2
+            },
+            "value": 30,
+            "question": "What is the different reason for setting a down screen vs a back screen?",
+            "answer": "A down screen frees a player moving up toward the perimeter, while a back screen frees a player cutting toward the basket by screening their defender from behind.",
+            "powerUp": {
+              "type": "HALVE_SPIN_COST_ON_CORRECT"
+            }
+          },
+          {
+            "id": "question-basketball-20",
+            "coordinate": {
+              "x": 1,
+              "y": 3
+            },
+            "value": 40,
+            "question": "Name 5 basic offensive actions or plays that can happen on a basketball court. (Not “shoot,” “pass,” or “dribble.”)",
+            "answer": "Pick-and-roll\nPick-and-pop\nSlot cut\nBackdoor cut\nPost-up\nDHO\nIso\nSlip screen\nCatch-and-shoot\nFlashing\nGive-and-go\nOff-ball screen",
+            "powerUp": {
+              "type": "DOUBLE_BALANCE_ON_CORRECT"
+            }
+          }
+        ]
+      },
+      {
+        "id": "topic-reality-tv",
+        "title": "Reality TV",
+        "x": 2,
+        "cells": [
+          {
+            "id": "question-reality-tv-5",
+            "coordinate": {
+              "x": 2,
+              "y": 0
+            },
+            "value": 10,
+            "question": "Which city was season 10 of Love Is Blind based in?",
+            "answer": "Ohio."
+          },
+          {
+            "id": "question-reality-tv-10",
+            "coordinate": {
+              "x": 2,
+              "y": 1
+            },
+            "value": 20,
+            "question": "Which couple last won Love Island USA (Season 7)?",
+            "answer": "Amaya and Bryan.",
+            "powerUp": {
+              "type": "HALVE_BALANCE_ON_INCORRECT"
+            }
+          },
+          {
+            "id": "question-reality-tv-15",
+            "coordinate": {
+              "x": 2,
+              "y": 2
+            },
+            "value": 30,
+            "question": "Which couple was voted the Perfect Match in the latest season 4?",
+            "answer": "Sophie and Dave.",
+            "powerUp": {
+              "type": "HALVE_BALANCE_ON_INCORRECT"
+            }
+          },
+          {
+            "id": "question-reality-tv-20",
+            "coordinate": {
+              "x": 2,
+              "y": 3
+            },
+            "value": 40,
+            "question": "Which couple won the main prize at the end of Season 6 of Too Hot To Handle?",
+            "answer": "Bri and Demari."
+          }
+        ]
+      },
+      {
+        "id": "topic-gaming",
+        "title": "Gaming",
+        "x": 3,
+        "cells": [
+          {
+            "id": "question-gaming-5",
+            "coordinate": {
+              "x": 3,
+              "y": 0
+            },
+            "value": 10,
+            "question": "What is the name of Caitlyn's ultimate ability in League? Must be the full name.",
+            "answer": "Ace in the Hole."
+          },
+          {
+            "id": "question-gaming-10",
+            "coordinate": {
+              "x": 3,
+              "y": 1
+            },
+            "value": 20,
+            "question": "How many times has Faker made it to the finals of Worlds?",
+            "answer": "8.",
+            "powerUp": {
+              "type": "DOUBLE_SPIN_COST_ON_INCORRECT"
+            }
+          },
+          {
+            "id": "question-gaming-15",
+            "coordinate": {
+              "x": 3,
+              "y": 2
+            },
+            "value": 30,
+            "question": "What is the in-game device/menu Nikki uses, similar to a phone?",
+            "answer": "Pear-Pal.",
+            "powerUp": {
+              "type": "DOUBLE_SPIN_COST_ON_INCORRECT"
+            }
+          },
+          {
+            "id": "question-gaming-20",
+            "coordinate": {
+              "x": 3,
+              "y": 3
+            },
+            "value": 40,
+            "powerUp": {
+              "type": "DOUBLE_SPIN_COST_ON_INCORRECT"
+            },
+            "question": "In LAD, what is Caleb's relationship to the player character before he becomes a romanceable love interest?",
+            "answer": "He is the player character's childhood friend."
+          }
+        ]
+      },
+      {
+        "id": "topic-pop-mart",
+        "title": "Pop Mart",
+        "x": 4,
+        "cells": [
+          {
+            "id": "question-pop-mart-5",
+            "coordinate": {
+              "x": 4,
+              "y": 0
+            },
+            "value": 10,
+            "question": "What city is Pop Mart headquartered in?",
+            "answer": "Beijing."
+          },
+          {
+            "id": "question-pop-mart-10",
+            "coordinate": {
+              "x": 4,
+              "y": 1
+            },
+            "value": 20,
+            "powerUp": {
+              "type": "HALVE_SPIN_COST_ON_CORRECT"
+            },
+            "question": "What is Pop Mart's vending-machine-style retail format commonly called?",
+            "answer": "Robo Shop."
+          },
+          {
+            "id": "question-pop-mart-15",
+            "coordinate": {
+              "x": 4,
+              "y": 2
+            },
+            "value": 30,
+            "question": "I have a dreamy, soft fantasy style and often appear with Cloud Baby. Who am I?",
+            "answer": "DIMOO.",
+            "powerUp": {
+              "type": "HALVE_BALANCE_ON_INCORRECT"
+            }
+          },
+          {
+            "id": "question-pop-mart-20",
+            "coordinate": {
+              "x": 4,
+              "y": 3
+            },
+            "value": 40,
+            "question": "Are there more or less than 50.5 Pop Mart IP figures in this apartment?",
+            "answer": "Let's count to find out.",
+            "powerUp": {
+              "type": "DOUBLE_BALANCE_ON_CORRECT"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "rewards": [
+    {
+      "id": "reward-mahas-po-boy",
+      "name": "Maha's Po Boy",
+      "value": 70,
+      "type": "SELLABLE"
+    },
+    {
+      "id": "reward-molly-tea",
+      "name": "Molly Tea",
+      "value": 60
+    },
+    {
+      "id": "reward-macs-pizza-slice",
+      "name": "Mac's Pizza Slice",
+      "value": 40
+    },
+    {
+      "id": "reward-badialli-slice",
+      "name": "Badialli Slice",
+      "value": 40
+    },
+    {
+      "id": "reward-fresca-slice",
+      "name": "Fresca Slice",
+      "value": 40
+    },
+    {
+      "id": "reward-tokyo-toast",
+      "name": "Tokyo Toast",
+      "value": 70,
+      "type": "SELLABLE"
+    },
+    {
+      "id": "reward-favourites-oysters",
+      "name": "Favourites Oysters",
+      "value": 80
+    },
+    {
+      "id": "reward-alfies",
+      "name": "Alfie's",
+      "value": 80
+    },
+    {
+      "id": "reward-good-brother-skewers",
+      "name": "Good Brother Skewers (2 orders)",
+      "value": 60
+    },
+    {
+      "id": "reward-chayan",
+      "name": "Chayan",
+      "value": 60
+    },
+    {
+      "id": "reward-hey-tea",
+      "name": "Hey Tea",
+      "value": 60
+    },
+    {
+      "id": "reward-la-la-pork-floss-bun",
+      "name": "La La Pork Floss Bun",
+      "value": 40
+    },
+    {
+      "id": "reward-terroni-sud-forno-pasta",
+      "name": "Terroni Sud Forno Pasta",
+      "value": 80,
+      "type": "SELLABLE"
+    },
+    {
+      "id": "reward-bang-bang-ice-cream",
+      "name": "Bang Bang Ice Cream",
+      "value": 40,
+      "type": "SELLABLE"
+    },
+    {
+      "id": "reward-hello-nori-set",
+      "name": "Hello Nori Set",
+      "value": 80,
+      "type": "SELLABLE"
+    },
+    {
+      "id": "reward-butter-chicken-garlic-naan",
+      "name": "Butter Chicken + Garlic Naan",
+      "value": 80,
+      "type": "SELLABLE"
+    },
+    {
+      "id": "reward-haidilao",
+      "name": "Haidilao Meal ($40)",
+      "value": 100,
+      "type": "SELLABLE"
+    },
+    {
+      "id": "league-RP",
+      "name": "Buy $30 of RP",
+      "value": 80,
+      "type": "SELLABLE"
+    },
+    {
+      "id": "snacks-basket",
+      "name": "Snack Speed Run (5min)",
+      "value": 80,
+      "type": "SELLABLE"
+    },
+    {
+      "id": "reward-e9cc9cd6-6637-43e6-a388-38bc542d374b",
+      "name": "Ride to Popmart",
+      "value": 30,
+      "type": "SELLABLE"
+    },
+    {
+      "id": "reward-305faf50-bca0-4dcb-b60c-d2d906510724",
+      "name": "Home cooked meal + Dishes",
+      "value": 30,
+      "type": "UNSELLABLE"
+    },
+    {
+      "id": "reward-07021205-d61d-4536-83df-6f668f8861fc",
+      "name": "Wear slippers for a month",
+      "value": 30,
+      "type": "SELLABLE"
+    },
+    {
+      "id": "reward-20fb259c-009a-4dc3-91f2-9fafd09d9336",
+      "name": "Mystery Gift #1",
+      "value": 70,
+      "type": "UNSELLABLE"
+    },
+    {
+      "id": "reward-8f31f62c-3aee-471e-a9e1-669ecd1d60c3",
+      "name": "Mystery Gift #2",
+      "value": 70,
+      "type": "UNSELLABLE"
+    },
+    {
+      "id": "reward-bb000661-8ccf-442e-9395-b4a4d73681ea",
+      "name": "Mystery Gift #3",
+      "value": 70,
+      "type": "UNSELLABLE"
+    },
+    {
+      "id": "reward-b1e55c03-03f6-4794-a96f-38840d9825c2",
+      "name": "Mystery Gift #4",
+      "value": 80,
+      "type": "UNSELLABLE"
+    },
+    {
+      "id": "reward-77f96caa-9874-41bd-90a4-eeecf0a292b5",
+      "name": "Make Coffee For 1 Week",
+      "value": 30,
+      "type": "UNSELLABLE"
+    },
+    {
+      "id": "reward-1ba8abd7-29ab-4eec-bd1c-a3777453d898",
+      "name": "Five TFT Games",
+      "value": 30,
+      "type": "SELLABLE"
+    },
+    {
+      "id": "reward-8e32350a-3651-4847-9615-d4b112f2e372",
+      "name": "Walk > Bike Veto",
+      "value": 30,
+      "type": "UNSELLABLE"
+    },
+    {
+      "id": "reward-f518e618-9ddf-44ba-a74e-8a409844161f",
+      "name": "Drive > Bike Veto",
+      "value": 30,
+      "type": "SELLABLE"
+    },
+    {
+      "id": "reward-39203860-873c-4065-92ce-4066764a35cb",
+      "name": "Ocean Spicy Role",
+      "value": 50,
+      "type": "SELLABLE"
+    },
+    {
+      "id": "reward-24337ba1-4bfb-4fd0-b47f-82b6a0eb4b06",
+      "name": "TCP Card Pack",
+      "value": 60,
+      "type": "SELLABLE"
+    }
+  ],
+  "rewardValueOptions": [
+    30,
+    40,
+    50,
+    60,
+    70,
+    80,
+    90,
+    100
+  ]
+}

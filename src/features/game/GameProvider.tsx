@@ -9,7 +9,12 @@ import {
   useReducer,
 } from "react";
 import type { GameConfig } from "@/features/config/configTypes";
-import type { RewardCoinValue, RewardConfig } from "@/features/config/configTypes";
+import type {
+  PowerUpType,
+  RewardCoinValue,
+  RewardConfig,
+  RewardType,
+} from "@/features/config/configTypes";
 import { gameReducer, type GameAction } from "./gameReducer";
 import { initializeGameState } from "./gameInitialization";
 import type { GameState } from "./gameTypes";
@@ -19,11 +24,27 @@ type GameContextValue = {
   state: GameState;
   isEditMode: boolean;
   dispatch(action: GameAction): void;
-  saveQuestionEdit(questionId: string, question: string, answer: string): void;
-  saveRewardEdit(rewardId: string, name: string, value: RewardCoinValue): void;
+  saveQuestionEdit(
+    questionId: string,
+    question: string,
+    answer: string,
+    powerUpType: PowerUpType | null,
+  ): void | Promise<void>;
+  saveRewardEdit(
+    rewardId: string,
+    name: string,
+    value: RewardCoinValue,
+    type: RewardType,
+  ): void | Promise<void>;
   saveRewardEdits(
-    rewards: Array<{ rewardId: string; name: string; value: RewardCoinValue }>,
-  ): void;
+    rewards: Array<{
+      rewardId: string;
+      name: string;
+      value: RewardCoinValue;
+      type: RewardType;
+    }>,
+  ): void | Promise<void>;
+  deleteReward(rewardId: string): void | Promise<void>;
   addReward(): RewardConfig | null;
 };
 
@@ -39,16 +60,33 @@ export function GameProvider({
   saveQuestionEdit = noop,
   saveRewardEdit = noop,
   saveRewardEdits = noop,
+  deleteReward = noop,
   addReward = noopAddReward,
 }: {
   config: GameConfig;
   children: ReactNode;
   isEditMode?: boolean;
-  saveQuestionEdit?(questionId: string, question: string, answer: string): void;
-  saveRewardEdit?(rewardId: string, name: string, value: RewardCoinValue): void;
+  saveQuestionEdit?(
+    questionId: string,
+    question: string,
+    answer: string,
+    powerUpType: PowerUpType | null,
+  ): void | Promise<void>;
+  saveRewardEdit?(
+    rewardId: string,
+    name: string,
+    value: RewardCoinValue,
+    type: RewardType,
+  ): void | Promise<void>;
   saveRewardEdits?(
-    rewards: Array<{ rewardId: string; name: string; value: RewardCoinValue }>,
-  ): void;
+    rewards: Array<{
+      rewardId: string;
+      name: string;
+      value: RewardCoinValue;
+      type: RewardType;
+    }>,
+  ): void | Promise<void>;
+  deleteReward?(rewardId: string): void | Promise<void>;
   addReward?(): RewardConfig | null;
 }) {
   const [state, dispatch] = useReducer(gameReducer, config, initializeGameState);
@@ -67,6 +105,7 @@ export function GameProvider({
       saveQuestionEdit,
       saveRewardEdit,
       saveRewardEdits,
+      deleteReward,
       addReward: addRewardAndSyncState,
     }),
     [
@@ -76,6 +115,7 @@ export function GameProvider({
       saveQuestionEdit,
       saveRewardEdit,
       saveRewardEdits,
+      deleteReward,
       addRewardAndSyncState,
     ],
   );

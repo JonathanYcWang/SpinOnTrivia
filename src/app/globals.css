@@ -47,38 +47,3 @@ input,
 select {
   font: inherit;
 }
-
-.power-up-confetti-piece {
-  position: absolute;
-  top: -1rem;
-  width: 0.55rem;
-  height: 0.9rem;
-  border-radius: 0.18rem;
-  opacity: 0;
-  animation-name: power-up-confetti-fall;
-  animation-timing-function: cubic-bezier(0.18, 0.74, 0.42, 1);
-  animation-fill-mode: forwards;
-}
-
-@keyframes power-up-confetti-fall {
-  0% {
-    opacity: 0;
-    transform: translate3d(0, -1rem, 0) rotate(0deg);
-  }
-
-  12% {
-    opacity: 1;
-  }
-
-  100% {
-    opacity: 0;
-    transform: translate3d(-1.5rem, 14rem, 0) rotate(var(--confetti-rotate));
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .power-up-confetti-piece {
-    animation: none;
-    opacity: 0;
-  }
-}

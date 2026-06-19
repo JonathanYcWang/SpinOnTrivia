@@ -22,11 +22,6 @@ export function SellTab() {
 
   return (
     <>
-      {state.isSellingLocked ? (
-        <p className="mb-4 rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] px-3 py-2 text-sm text-[var(--text-muted)]">
-          Selling is locked until the next correct answer.
-        </p>
-      ) : null}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {rewards.map((reward) => (
           <RewardCard

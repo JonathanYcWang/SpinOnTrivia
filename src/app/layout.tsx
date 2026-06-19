@@ -3,7 +3,7 @@ import { ToastProvider } from "@/components/ui/ToastProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Jeopardy Coin Board",
+  title: "Spin On Trivia",
   description: "Jeopardy coin board and reward wheel game",
 };
 

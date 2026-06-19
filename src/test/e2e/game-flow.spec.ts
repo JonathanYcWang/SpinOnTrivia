@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("player starts from Data.js and completes a board question", async ({
+test("player starts from JSON data and completes a board question", async ({
   page,
 }) => {
   await page.goto("/");
@@ -38,7 +38,7 @@ test("query-gated edit mode saves board and reward overrides", async ({
 
   await page.getByRole("tab", { name: "Shop" }).click();
   await page.getByRole("button", { name: "Add reward" }).click();
-  await expect(page.locator('input[value="Blind Box"]')).toBeVisible();
+  await expect(page.locator('input[value="A Placeholder"]')).toBeVisible();
   await page.getByLabel("Reward name").first().fill("Edited Reward");
   await page.getByLabel("Reward value").first().selectOption("50");
   await page.getByRole("button", { name: "Save" }).click();

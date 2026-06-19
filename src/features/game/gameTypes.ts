@@ -1,5 +1,5 @@
 export type GameStatus = "HOME" | "ACTIVE" | "GAME_OVER";
-export type GameplayTab = "BOARD" | "WHEEL" | "SHOP";
+export type GameplayTab = "BOARD" | "WHEEL" | "SHOP" | "RULES";
 export type ShopTab = "BUY" | "SELL";
 export type QuestionRuntimeState =
   | "AVAILABLE"
@@ -7,6 +7,8 @@ export type QuestionRuntimeState =
   | "INCORRECT"
   | "UNAVAILABLE";
 export type QuestionStateById = Record<string, QuestionRuntimeState>;
+
+export const BASE_SPIN_COST = 20;
 
 export type GameState = {
   gameStatus: GameStatus;
@@ -28,6 +30,5 @@ export type GameState = {
   wheelRotationDeg: number;
   correctStreakCount: number;
   isStreakBonusActive: boolean;
-  isSellingLocked: boolean;
-  isMysteryGiftDiscovered: boolean;
+  nextSpinCost: number;
 };

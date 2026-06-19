@@ -78,6 +78,9 @@ export function WheelTab() {
       <div className="text-2xl font-bold">
         <CoinDisplay value={state.playerCoins} />
       </div>
+      <p className="text-sm font-semibold text-[var(--text-muted)]">
+        Next spin: <CoinDisplay value={state.nextSpinCost} />
+      </p>
       {segments.length === 0 ? (
         <p className="text-[var(--text-muted)]">
           No rewards remain on the wheel.

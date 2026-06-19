@@ -36,6 +36,11 @@ export function RewardCard({
           {mode === "sell" ? "Sell Value: " : null}
           <CoinDisplay value={value} />
         </p>
+        {reward.type === "UNSELLABLE" ? (
+          <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+            Cannot be sold
+          </p>
+        ) : null}
       </div>
       {reward.description ? (
         <div className="text-sm leading-6 text-[var(--text-muted)]">

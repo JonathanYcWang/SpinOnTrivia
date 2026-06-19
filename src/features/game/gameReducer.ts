@@ -6,9 +6,13 @@ import {
   getSellValue,
   isGameOver,
 } from "./gameSelectors";
-import type { GameplayTab, GameState, ShopTab } from "./gameTypes";
-
-const SPIN_COST = 20;
+import {
+  BASE_SPIN_COST,
+  type GameplayTab,
+  type GameState,
+  type ShopTab,
+} from "./gameTypes";
+import { getCorrectStreakBonus } from "./gameRules";
 
 export type GameAction =
   | { type: "START_NEW_GAME"; config: GameConfig }
@@ -16,7 +20,6 @@ export type GameAction =
   | { type: "SET_ACTIVE_SHOP_TAB"; tab: ShopTab }
   | { type: "OPEN_QUESTION"; questionId: string; mode?: "PLAY" | "EDIT" }
   | { type: "CLOSE_QUESTION" }
-  | { type: "DISMISS_MYSTERY_GIFT" }
   | {
       type: "MARK_QUESTION";
       questionId: string;
@@ -33,6 +36,7 @@ export type GameAction =
     }
   | { type: "FINISH_SPIN"; config: GameConfig }
   | { type: "ADD_REWARD"; rewardId: string; config: GameConfig }
+  | { type: "DELETE_REWARD"; rewardId: string; config: GameConfig }
   | { type: "BUY_REWARD"; rewardId: string; config: GameConfig }
   | { type: "SELL_REWARD"; rewardId: string; config: GameConfig };
 
@@ -55,13 +59,29 @@ function applyCorrectAnswerCoins(state: GameState, questionCoinValue: number) {
     state.isStreakBonusActive || correctStreakCount >= 3;
   const questionCoins =
     questionCoinValue +
-    (isStreakBonusActive ? Math.ceil(correctStreakCount / 5) * 5 : 0);
+    (isStreakBonusActive ? getCorrectStreakBonus(correctStreakCount) : 0);
   return {
     playerCoins: state.playerCoins + questionCoins,
     correctStreakCount,
     isStreakBonusActive,
-    isSellingLocked: false,
   };
+}
+
+function applySpinCostPowerUp(
+  currentCost: number,
+  powerUpType: string | undefined,
+  result: "CORRECT" | "INCORRECT",
+) {
+  if (
+    result === "INCORRECT" &&
+    powerUpType === "DOUBLE_SPIN_COST_ON_INCORRECT"
+  ) {
+    return BASE_SPIN_COST * 2;
+  }
+  if (result === "CORRECT" && powerUpType === "HALVE_SPIN_COST_ON_CORRECT") {
+    return BASE_SPIN_COST / 2;
+  }
+  return currentCost;
 }
 
 function applyPowerUpCoins({
@@ -91,7 +111,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         initializeGameState(action.config),
       );
     case "SET_ACTIVE_TAB":
-      return { ...state, activeTab: action.tab };
+      return state.isWheelSpinning
+        ? state
+        : { ...state, activeTab: action.tab };
     case "SET_ACTIVE_SHOP_TAB":
       return { ...state, activeShopTab: action.tab };
     case "OPEN_QUESTION": {
@@ -111,8 +133,6 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
     case "CLOSE_QUESTION":
       return { ...state, activeQuestionId: null };
-    case "DISMISS_MYSTERY_GIFT":
-      return { ...state, isMysteryGiftDiscovered: false };
     case "MARK_QUESTION": {
       const question = getQuestionById(action.config, action.questionId);
       if (
@@ -127,12 +147,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         action.result === "CORRECT"
           ? applyCorrectAnswerCoins(state, question.coinValue)
           : {
-              playerCoins: Math.max(state.playerCoins - question.coinValue, 0),
+              playerCoins: state.playerCoins,
               correctStreakCount: 0,
               isStreakBonusActive: false,
-              isSellingLocked:
-                state.isSellingLocked ||
-                powerUpType === "DISABLE_SELLING_ON_INCORRECT",
             };
       const nextState = {
         ...state,
@@ -143,9 +160,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         }),
         correctStreakCount: answerState.correctStreakCount,
         isStreakBonusActive: answerState.isStreakBonusActive,
-        isSellingLocked: answerState.isSellingLocked,
-        isMysteryGiftDiscovered:
-          action.result === "CORRECT" && powerUpType === "MYSTERY_GIFT",
+        nextSpinCost: applySpinCostPowerUp(
+          state.nextSpinCost,
+          powerUpType,
+          action.result,
+        ),
         activeQuestionId: null,
         questionStates: {
           ...state.questionStates,
@@ -156,7 +175,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
     case "START_SPIN": {
       if (
-        state.playerCoins < SPIN_COST ||
+        state.playerCoins < state.nextSpinCost ||
         state.wheelRewardIds.length < 1 ||
         state.isWheelSpinning ||
         (action.rewardId !== null &&
@@ -166,7 +185,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
       return {
         ...state,
-        playerCoins: state.playerCoins - SPIN_COST,
+        playerCoins: state.playerCoins - state.nextSpinCost,
+        nextSpinCost: BASE_SPIN_COST,
         isWheelSpinning: true,
         spinSnapshotSegmentIds: action.spinSnapshotSegmentIds,
         selectedSpinSegmentId: action.segmentId,
@@ -223,6 +243,21 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         shopRewardIds: [...state.shopRewardIds, action.rewardId],
       };
     }
+    case "DELETE_REWARD": {
+      const nextState = {
+        ...state,
+        ownedRewardIds: removeId(state.ownedRewardIds, action.rewardId),
+        soldRewardIds: removeId(state.soldRewardIds, action.rewardId),
+        wheelRewardIds: removeId(state.wheelRewardIds, action.rewardId),
+        shopRewardIds: removeId(state.shopRewardIds, action.rewardId),
+        spentWheelRewardIds: removeId(state.spentWheelRewardIds, action.rewardId),
+        selectedSpinRewardId:
+          state.selectedSpinRewardId === action.rewardId
+            ? null
+            : state.selectedSpinRewardId,
+      };
+      return withRecomputedGameStatus(action.config, nextState);
+    }
     case "BUY_REWARD": {
       const reward = getRewardById(action.config, action.rewardId);
       if (
@@ -250,9 +285,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const reward = getRewardById(action.config, action.rewardId);
       if (
         !reward ||
+        reward.type === "UNSELLABLE" ||
         !state.ownedRewardIds.includes(action.rewardId) ||
         state.soldRewardIds.includes(action.rewardId) ||
-        state.isSellingLocked ||
         state.isWheelSpinning
       ) {
         return state;

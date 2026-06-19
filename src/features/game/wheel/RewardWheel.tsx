@@ -1,10 +1,7 @@
 import type { WheelSegment } from "./wheelSegments";
 
 const SPENT_SEGMENT = { fill: "#1f2937", text: "#1f2937" };
-const REWARD_SEGMENTS = [
-  { fill: "#E897A4" },
-  { fill: "#F4D7D4" },
-] as const;
+const REWARD_SEGMENTS = [{ fill: "#E897A4" }, { fill: "#F4D7D4" }] as const;
 
 function polarToCartesian(
   cx: number,
@@ -108,10 +105,7 @@ export function RewardWheel({
                     x="0"
                     y="0"
                   >
-                    {truncateWheelLabel(
-                      label,
-                      segments.length > 16 ? 12 : 16,
-                    )}
+                    {truncateWheelLabel(label, segments.length > 16 ? 12 : 16)}
                   </text>
                 </g>
               ) : null}

@@ -1,4 +1,5 @@
 import { GamePageClient } from "@/features/game/GamePageClient";
+import { readEditableGameData } from "@/features/config/gameDataRepository";
 
 export default async function Home({
   searchParams,
@@ -9,5 +10,11 @@ export default async function Home({
   const isEditModeParam = Array.isArray(params.isEditMode)
     ? params.isEditMode[0]
     : params.isEditMode;
-  return <GamePageClient initialEditMode={isEditModeParam === "true"} />;
+  const gameDataResult = await readEditableGameData();
+  return (
+    <GamePageClient
+      initialEditMode={isEditModeParam === "true"}
+      initialGameDataResult={gameDataResult}
+    />
+  );
 }

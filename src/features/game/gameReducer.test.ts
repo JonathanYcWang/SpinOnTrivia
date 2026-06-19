@@ -4,6 +4,7 @@ import { initializeGameState } from "./gameInitialization";
 import { canSellReward, isGameOver } from "./gameSelectors";
 import { validConfig } from "@/test/fixtures/configs";
 import type { GameConfig, PowerUpType } from "@/features/config/configTypes";
+import type { GameState } from "./gameTypes";
 
 function configWithPowerUp(questionId: string, type: PowerUpType): GameConfig {
   return {
@@ -21,7 +22,7 @@ function answerQuestion({
   playerCoins = 0,
   correctStreakCount = 0,
   isStreakBonusActive = false,
-  isSellingLocked = false,
+  nextSpinCost = 20,
 }: {
   config: GameConfig;
   questionId: string;
@@ -29,14 +30,14 @@ function answerQuestion({
   playerCoins?: number;
   correctStreakCount?: number;
   isStreakBonusActive?: boolean;
-  isSellingLocked?: boolean;
+  nextSpinCost?: number;
 }) {
   let state = {
     ...initializeGameState(config),
     playerCoins,
     correctStreakCount,
     isStreakBonusActive,
-    isSellingLocked,
+    nextSpinCost,
   };
   state = gameReducer(state, {
     type: "OPEN_QUESTION",
@@ -55,7 +56,7 @@ describe("game reducer", () => {
     expect(initializeGameState(validConfig).playerCoins).toBe(0);
   });
 
-  it("correct answer adds coin value and incorrect adds 0", () => {
+  it("correct answer adds coin value and incorrect leaves coins unchanged", () => {
     let state = initializeGameState(validConfig);
     state = gameReducer(state, {
       type: "OPEN_QUESTION",
@@ -116,6 +117,29 @@ describe("game reducer", () => {
     expect(state.spentWheelRewardIds).toContain("reward-tea");
     expect(state.wheelRewardIds).toContain("reward-tea");
     expect(state.shopRewardIds).not.toContain("reward-tea");
+  });
+
+  it("prevents changing gameplay tabs while the wheel is spinning", () => {
+    let state: GameState = {
+      ...initializeGameState(validConfig),
+      activeTab: "WHEEL",
+      playerCoins: 20,
+    };
+    state = gameReducer(state, {
+      type: "START_SPIN",
+      segmentId: "reward:reward-tea",
+      rewardId: "reward-tea",
+      spinSnapshotSegmentIds: state.wheelRewardIds.map((id) => `reward:${id}`),
+      targetRotationDeg: 100,
+      config: validConfig,
+    });
+
+    const nextState = gameReducer(state, {
+      type: "SET_ACTIVE_TAB",
+      tab: "SHOP",
+    });
+
+    expect(nextState.activeTab).toBe("WHEEL");
   });
 
   it("landing on an empty segment costs coins and awards nothing", () => {
@@ -222,7 +246,56 @@ describe("game reducer", () => {
     expect(state.wheelRewardIds).not.toContain("reward-tea");
   });
 
-  it("double balance applies after normal and streak bonus question coins", () => {
+  it("unsellable rewards cannot be sold", () => {
+    const config: GameConfig = {
+      ...validConfig,
+      rewards: validConfig.rewards.map((reward) =>
+        reward.id === "reward-tea"
+          ? { ...reward, type: "UNSELLABLE" as const }
+          : reward,
+      ),
+    };
+    const reward = config.rewards[0];
+    const state = {
+      ...initializeGameState(config),
+      ownedRewardIds: ["reward-tea"],
+    };
+
+    expect(canSellReward(state, reward)).toBe(false);
+    const nextState = gameReducer(state, {
+      type: "SELL_REWARD",
+      rewardId: "reward-tea",
+      config,
+    });
+
+    expect(nextState.ownedRewardIds).toContain("reward-tea");
+    expect(nextState.soldRewardIds).not.toContain("reward-tea");
+  });
+
+  it("deleting a reward removes it from all runtime reward lists", () => {
+    const state = {
+      ...initializeGameState(validConfig),
+      ownedRewardIds: ["reward-tea"],
+      soldRewardIds: ["reward-tea"],
+      spentWheelRewardIds: ["reward-tea"],
+      selectedSpinRewardId: "reward-tea",
+    };
+
+    const nextState = gameReducer(state, {
+      type: "DELETE_REWARD",
+      rewardId: "reward-tea",
+      config: validConfig,
+    });
+
+    expect(nextState.ownedRewardIds).not.toContain("reward-tea");
+    expect(nextState.soldRewardIds).not.toContain("reward-tea");
+    expect(nextState.wheelRewardIds).not.toContain("reward-tea");
+    expect(nextState.shopRewardIds).not.toContain("reward-tea");
+    expect(nextState.spentWheelRewardIds).not.toContain("reward-tea");
+    expect(nextState.selectedSpinRewardId).toBeNull();
+  });
+
+  it("double balance applies after normal question coins", () => {
     const config = configWithPowerUp(
       "question-history-20",
       "DOUBLE_BALANCE_ON_CORRECT",
@@ -232,10 +305,8 @@ describe("game reducer", () => {
       questionId: "question-history-20",
       result: "CORRECT",
       playerCoins: 10,
-      correctStreakCount: 2,
     });
-    expect(state.playerCoins).toBe(80);
-    expect(state.isStreakBonusActive).toBe(true);
+    expect(state.playerCoins).toBe(60);
   });
 
   it("halve balance applies on incorrect and rounds up", () => {
@@ -252,33 +323,10 @@ describe("game reducer", () => {
     expect(state.playerCoins).toBe(11);
   });
 
-  it("mystery gift does not mutate coins beyond normal scoring", () => {
-    const config = configWithPowerUp("question-history-20", "MYSTERY_GIFT");
-    const state = answerQuestion({
-      config,
-      questionId: "question-history-20",
-      result: "CORRECT",
-      playerCoins: 10,
-    });
-    expect(state.playerCoins).toBe(30);
-    expect(state.isMysteryGiftDiscovered).toBe(true);
-    expect(state.ownedRewardIds).toEqual([]);
-    expect(state.wheelRewardIds).toEqual(config.rewards.map((reward) => reward.id));
-    expect(state.shopRewardIds).toEqual(config.rewards.map((reward) => reward.id));
-
-    const incorrectState = answerQuestion({
-      config,
-      questionId: "question-history-20",
-      result: "INCORRECT",
-      playerCoins: 10,
-    });
-    expect(incorrectState.isMysteryGiftDiscovered).toBe(false);
-  });
-
   it("bonus 10 applies only on correct answers", () => {
     const config = configWithPowerUp(
       "question-history-20",
-      "BONUS_10_ON_CORRECT",
+      "BONUS_ON_CORRECT",
     );
     const correctState = answerQuestion({
       config,
@@ -286,7 +334,7 @@ describe("game reducer", () => {
       result: "CORRECT",
       playerCoins: 5,
     });
-    expect(correctState.playerCoins).toBe(35);
+    expect(correctState.playerCoins).toBe(45);
 
     const incorrectState = answerQuestion({
       config,
@@ -297,14 +345,14 @@ describe("game reducer", () => {
     expect(incorrectState.playerCoins).toBe(5);
   });
 
-  it("third consecutive correct answer gets a 10 coin bonus and keeps streak bonus active", () => {
+  it("third consecutive correct answer gets a scaling streak bonus and keeps streak bonus active", () => {
     const state = answerQuestion({
       config: validConfig,
       questionId: "question-history-20",
       result: "CORRECT",
       correctStreakCount: 2,
     });
-    expect(state.playerCoins).toBe(30);
+    expect(state.playerCoins).toBe(25);
     expect(state.correctStreakCount).toBe(3);
     expect(state.isStreakBonusActive).toBe(true);
   });
@@ -321,42 +369,41 @@ describe("game reducer", () => {
     expect(state.isStreakBonusActive).toBe(false);
   });
 
-  it("selling lock disables sell actions and clears after next correct answer", () => {
+  it("incorrect spin-cost power-up doubles the next spin cost and is consumed by spinning", () => {
     const config = configWithPowerUp(
       "question-history-20",
-      "DISABLE_SELLING_ON_INCORRECT",
+      "DOUBLE_SPIN_COST_ON_INCORRECT",
     );
     let state = answerQuestion({
       config,
       questionId: "question-history-20",
       result: "INCORRECT",
-      playerCoins: 40,
+      playerCoins: 60,
     });
-    state = {
-      ...state,
-      ownedRewardIds: ["reward-tea"],
-    };
-    expect(state.isSellingLocked).toBe(true);
-    expect(canSellReward(state, config.rewards[0])).toBe(false);
-    const lockedSellState = gameReducer(state, {
-      type: "SELL_REWARD",
+    expect(state.nextSpinCost).toBe(40);
+    state = gameReducer(state, {
+      type: "START_SPIN",
+      segmentId: "reward:reward-tea",
       rewardId: "reward-tea",
+      spinSnapshotSegmentIds: state.wheelRewardIds.map((id) => `reward:${id}`),
+      targetRotationDeg: 100,
       config,
     });
-    expect(lockedSellState.ownedRewardIds).toContain("reward-tea");
+    expect(state.playerCoins).toBe(20);
+    expect(state.nextSpinCost).toBe(20);
+  });
 
-    state = gameReducer(state, {
-      type: "OPEN_QUESTION",
-      questionId: "question-food-5",
-    });
-    state = gameReducer(state, {
-      type: "MARK_QUESTION",
-      questionId: "question-food-5",
-      result: "CORRECT",
+  it("correct spin-cost power-up halves the next spin cost", () => {
+    const config = configWithPowerUp(
+      "question-history-20",
+      "HALVE_SPIN_COST_ON_CORRECT",
+    );
+    const state = answerQuestion({
       config,
+      questionId: "question-history-20",
+      result: "CORRECT",
     });
-    expect(state.isSellingLocked).toBe(false);
-    expect(canSellReward(state, config.rewards[0])).toBe(true);
+    expect(state.nextSpinCost).toBe(10);
   });
 
   it("new game resets power-up runtime state", () => {
@@ -365,13 +412,13 @@ describe("game reducer", () => {
         ...initializeGameState(validConfig),
         correctStreakCount: 3,
         isStreakBonusActive: true,
-        isSellingLocked: true,
+        nextSpinCost: 40,
       },
       { type: "START_NEW_GAME", config: validConfig },
     );
     expect(state.correctStreakCount).toBe(0);
     expect(state.isStreakBonusActive).toBe(false);
-    expect(state.isSellingLocked).toBe(false);
+    expect(state.nextSpinCost).toBe(20);
   });
 
   it("wheel with no available (unspent) rewards causes immediate game over", () => {

@@ -1,7 +1,7 @@
 import type { RewardConfig } from "@/features/config/configTypes";
 
 export const rewardTiers = [
-  { id: "40-50", label: "Bronze", min: 40, max: 40 },
+  { id: "30-40", label: "Bronze", min: 30, max: 40 },
   { id: "50-60", label: "Silver", min: 50, max: 60 },
   { id: "70-80", label: "Gold", min: 70, max: 80 },
   { id: "90-100", label: "Platinum", min: 90, max: 100 },

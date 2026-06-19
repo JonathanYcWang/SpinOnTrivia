@@ -1,14 +1,16 @@
 "use client";
 
-import { type CSSProperties, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { CoinDisplay } from "@/components/ui/CoinDisplay";
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
 import type {
   PowerUpType,
   QuestionConfig,
 } from "@/features/config/configTypes";
+import { POWER_UP_TYPES } from "@/features/config/configTypes";
 import { getQuestionById, getTopicById } from "../gameSelectors";
 import { useGame } from "../GameProvider";
 
@@ -87,9 +89,7 @@ export function QuestionModal() {
               </span>{" "}
               <CoinDisplay value={question.coinValue} />
             </p>
-            {!isEditMode &&
-            question.powerUp &&
-            question.powerUp.type !== "MYSTERY_GIFT" ? (
+            {!isEditMode && question.powerUp ? (
               <PowerUpBanner type={question.powerUp.type} />
             ) : null}
           </div>
@@ -99,8 +99,13 @@ export function QuestionModal() {
               <EditQuestionFields
                 key={question.id}
                 onCancel={() => dispatch({ type: "CLOSE_QUESTION" })}
-                onSave={(nextQuestion, nextAnswer) => {
-                  saveQuestionEdit(question.id, nextQuestion, nextAnswer);
+                onSave={(nextQuestion, nextAnswer, nextPowerUpType) => {
+                  saveQuestionEdit(
+                    question.id,
+                    nextQuestion,
+                    nextAnswer,
+                    nextPowerUpType,
+                  );
                   dispatch({ type: "CLOSE_QUESTION" });
                 }}
                 question={question}
@@ -125,7 +130,7 @@ export function QuestionModal() {
                 </Button>
                 <Button
                   onClick={() => markQuestion("CORRECT")}
-                  variant="primary"
+                  variant="success"
                 >
                   Correct
                 </Button>
@@ -147,47 +152,6 @@ export function QuestionModal() {
   );
 }
 
-const confettiPieces = Array.from({ length: 28 }, (_, index) => ({
-  id: index,
-  left: 8 + ((index * 29) % 84),
-  delay: (index % 7) * 0.06,
-  duration: 0.9 + (index % 5) * 0.12,
-  rotate: (index % 2 === 0 ? 1 : -1) * (80 + index * 11),
-  color: [
-    "var(--primary)",
-    "var(--secondary)",
-    "var(--success)",
-    "#facc15",
-    "#60a5fa",
-  ][index % 5],
-}));
-
-export function PowerUpConfetti() {
-  return (
-    <div
-      aria-hidden="true"
-      className="pointer-events-none fixed inset-x-0 top-0 z-[55] h-56 overflow-hidden"
-      data-testid="power-up-confetti"
-    >
-      {confettiPieces.map((piece) => (
-        <span
-          className="power-up-confetti-piece"
-          key={piece.id}
-          style={
-            {
-              backgroundColor: piece.color,
-              left: `${piece.left}%`,
-              animationDelay: `${piece.delay}s`,
-              animationDuration: `${piece.duration}s`,
-              "--confetti-rotate": `${piece.rotate}deg`,
-            } as CSSProperties
-          }
-        />
-      ))}
-    </div>
-  );
-}
-
 const powerUpCopy: Record<PowerUpType, { name: string; effect: string }> = {
   DOUBLE_BALANCE_ON_CORRECT: {
     name: "Power Up",
@@ -197,17 +161,17 @@ const powerUpCopy: Record<PowerUpType, { name: string; effect: string }> = {
     name: "Caution",
     effect: "Incorrect answer halves your current coins.",
   },
-  MYSTERY_GIFT: {
-    name: "Mystery Gift",
-    effect: "Correct answer reveals a mystery gift.",
-  },
   BONUS_ON_CORRECT: {
     name: "Bonus",
     effect: "Correct answer adds 20 bonus coins.",
   },
-  DISABLE_SELLING_ON_INCORRECT: {
+  DOUBLE_SPIN_COST_ON_INCORRECT: {
     name: "Caution",
-    effect: "Incorrect answer locks selling until your next correct answer.",
+    effect: "Incorrect answer doubles the cost of your next wheel spin.",
+  },
+  HALVE_SPIN_COST_ON_CORRECT: {
+    name: "Power Up",
+    effect: "Correct answer halves the cost of your next wheel spin.",
   },
 };
 
@@ -215,7 +179,7 @@ function PowerUpBanner({ type }: { type: PowerUpType }) {
   const copy = powerUpCopy[type];
   return (
     <div
-      className="rounded-lg border border-[var(--primary)]/40 bg-[var(--primary)]/10 px-3 py-2 text-sm text-[var(--foreground)]"
+      className="rounded-lg border border-[var(--primary)]/40 bg-[var(--primary)]/10 px-3 py-2 text-[1.225rem] leading-7 text-[var(--foreground)]"
       role="status"
     >
       <span className="font-semibold">{copy.name}:</span> {copy.effect}
@@ -230,11 +194,16 @@ function EditQuestionFields({
 }: {
   question: QuestionConfig;
   onCancel(): void;
-  onSave(question: string, answer: string): void;
+  onSave(
+    question: string,
+    answer: string,
+    powerUpType: PowerUpType | null,
+  ): void;
 }) {
   const [draft, setDraft] = useState({
     question: question.questionText,
     answer: question.answerText,
+    powerUpType: question.powerUp?.type ?? "",
   });
   const [errors, setErrors] = useState({ question: "", answer: "" });
 
@@ -247,7 +216,11 @@ function EditQuestionFields({
     };
     setErrors(nextErrors);
     if (nextErrors.question || nextErrors.answer) return;
-    onSave(nextQuestion, nextAnswer);
+    onSave(
+      nextQuestion,
+      nextAnswer,
+      draft.powerUpType ? (draft.powerUpType as PowerUpType) : null,
+    );
   }
 
   return (
@@ -279,6 +252,25 @@ function EditQuestionFields({
             }))
           }
         />
+      </Field>
+      <Field id="question-edit-power-up" label="Power up">
+        <Select
+          id="question-edit-power-up"
+          value={draft.powerUpType}
+          onChange={(event) =>
+            setDraft((current) => ({
+              ...current,
+              powerUpType: event.target.value,
+            }))
+          }
+        >
+          <option value="">None</option>
+          {POWER_UP_TYPES.map((type) => (
+            <option key={type} value={type}>
+              {powerUpCopy[type].name} - {powerUpCopy[type].effect}
+            </option>
+          ))}
+        </Select>
       </Field>
       <div className="flex justify-end gap-3">
         <Button onClick={onCancel}>Cancel</Button>

@@ -2558,7 +2558,8 @@ powerUp: {
   - `HALVE_BALANCE_ON_INCORRECT`
   - `MYSTERY_GIFT`
   - `BONUS_ON_CORRECT`
-  - `DISABLE_SELLING_ON_INCORRECT`
+  - `DOUBLE_SPIN_COST_ON_INCORRECT`
+  - `HALVE_SPIN_COST_ON_CORRECT`
 
 Validation rules:
 
@@ -2576,13 +2577,14 @@ Gameplay behavior:
 - `HALVE_BALANCE_ON_INCORRECT` halves the current coin balance only after an incorrect answer and rounds up.
 - `MYSTERY_GIFT` reveals a message only and must not mutate coins, rewards, inventory, shop, or wheel state.
 - `BONUS_ON_CORRECT` adds 10 coins only after a correct answer and after normal or streak question coins are awarded.
-- `DISABLE_SELLING_ON_INCORRECT` locks selling only when that configured cell is answered incorrectly.
+- `DOUBLE_SPIN_COST_ON_INCORRECT` sets the next spin cost to 40 coins only when that configured cell is answered incorrectly.
+- `HALVE_SPIN_COST_ON_CORRECT` sets the next spin cost to 10 coins only when that configured cell is answered correctly.
 
 Runtime state:
 
 - Track `correctStreakCount`.
 - Track `isStreakMultiplierActive`.
-- Track `isSellingLocked`.
+- Track `nextSpinCost`.
 
 Streak behavior:
 
@@ -2592,11 +2594,11 @@ Streak behavior:
 - The multiplier remains active until the next incorrect answer.
 - Incorrect answers reset `correctStreakCount` and set `isStreakMultiplierActive` to `false`.
 
-Selling-lock behavior:
+Spin-cost behavior:
 
-- While `isSellingLocked` is `true`, Sell actions are disabled.
-- Selling unlocks on the next correct answer.
-- New Game resets `correctStreakCount`, `isStreakMultiplierActive`, and `isSellingLocked`.
+- A modified cost applies to the next spin only.
+- Starting a spin resets the next spin cost to 20 coins.
+- New Game resets `correctStreakCount`, `isStreakMultiplierActive`, and `nextSpinCost`.
 
 Power-up test additions:
 
@@ -2609,5 +2611,5 @@ Power-up test additions:
 - Bonus 10 applies only on correct answers.
 - Third consecutive correct answer gets 2x and keeps the multiplier active.
 - Incorrect answer resets streak and disables the multiplier.
-- Selling lock disables Sell actions and clears after the next correct answer.
+- Spin-cost power ups apply on the matching result and reset after the next spin.
 - New Game resets all power-up runtime state.

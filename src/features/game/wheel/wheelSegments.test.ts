@@ -27,9 +27,9 @@ describe("wheel segments", () => {
 
   it("does not add an empty segment after an unpaired final reward", () => {
     const rewards: RewardConfig[] = [
-      { id: "reward-1", name: "Reward 1", description: "", coinValue: 40 },
-      { id: "reward-2", name: "Reward 2", description: "", coinValue: 50 },
-      { id: "reward-3", name: "Reward 3", description: "", coinValue: 70 },
+      { id: "reward-1", name: "Reward 1", description: "", coinValue: 40, type: "SELLABLE" },
+      { id: "reward-2", name: "Reward 2", description: "", coinValue: 50, type: "SELLABLE" },
+      { id: "reward-3", name: "Reward 3", description: "", coinValue: 70, type: "SELLABLE" },
     ];
     const config: GameConfig = { ...validConfig, rewards };
     const segments = getWheelSegments(config, initializeGameState(config));
@@ -62,10 +62,10 @@ describe("wheel segments", () => {
 
   it("adds generated empty segments after every two active reward segments", () => {
     const rewards: RewardConfig[] = [
-      { id: "reward-1", name: "Reward 1", description: "", coinValue: 40 },
-      { id: "reward-2", name: "Reward 2", description: "", coinValue: 50 },
-      { id: "reward-3", name: "Reward 3", description: "", coinValue: 70 },
-      { id: "reward-4", name: "Reward 4", description: "", coinValue: 90 },
+      { id: "reward-1", name: "Reward 1", description: "", coinValue: 40, type: "SELLABLE" },
+      { id: "reward-2", name: "Reward 2", description: "", coinValue: 50, type: "SELLABLE" },
+      { id: "reward-3", name: "Reward 3", description: "", coinValue: 70, type: "SELLABLE" },
+      { id: "reward-4", name: "Reward 4", description: "", coinValue: 90, type: "SELLABLE" },
     ];
     const config: GameConfig = { ...validConfig, rewards };
     const state = {
@@ -85,14 +85,14 @@ describe("wheel segments", () => {
 
   it("spreads reward tiers across reward positions before interleaving empty segments", () => {
     const rewards: RewardConfig[] = [
-      { id: "bronze-1", name: "Bronze 1", description: "", coinValue: 40 },
-      { id: "bronze-2", name: "Bronze 2", description: "", coinValue: 40 },
-      { id: "silver-1", name: "Silver 1", description: "", coinValue: 50 },
-      { id: "silver-2", name: "Silver 2", description: "", coinValue: 60 },
-      { id: "gold-1", name: "Gold 1", description: "", coinValue: 70 },
-      { id: "gold-2", name: "Gold 2", description: "", coinValue: 80 },
-      { id: "platinum-1", name: "Platinum 1", description: "", coinValue: 90 },
-      { id: "platinum-2", name: "Platinum 2", description: "", coinValue: 100 },
+      { id: "bronze-1", name: "Bronze 1", description: "", coinValue: 40, type: "SELLABLE" },
+      { id: "bronze-2", name: "Bronze 2", description: "", coinValue: 40, type: "SELLABLE" },
+      { id: "silver-1", name: "Silver 1", description: "", coinValue: 50, type: "SELLABLE" },
+      { id: "silver-2", name: "Silver 2", description: "", coinValue: 60, type: "SELLABLE" },
+      { id: "gold-1", name: "Gold 1", description: "", coinValue: 70, type: "SELLABLE" },
+      { id: "gold-2", name: "Gold 2", description: "", coinValue: 80, type: "SELLABLE" },
+      { id: "platinum-1", name: "Platinum 1", description: "", coinValue: 90, type: "SELLABLE" },
+      { id: "platinum-2", name: "Platinum 2", description: "", coinValue: 100, type: "SELLABLE" },
     ];
     const config: GameConfig = { ...validConfig, rewards };
     const rewardIds = getWheelSegments(config, initializeGameState(config))

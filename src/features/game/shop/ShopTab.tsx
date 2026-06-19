@@ -7,9 +7,10 @@ import { Tabs } from "@/components/ui/Tabs";
 import type {
   RewardConfig,
   RewardCoinValue,
+  RewardType,
 } from "@/features/config/configTypes";
 import { sortRewards } from "@/lib/sorting";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useGame } from "../GameProvider";
 import { BuyTab } from "./BuyTab";
 import { SellTab } from "./SellTab";
@@ -41,16 +42,16 @@ export function ShopTab() {
 }
 
 function RewardEditList({ rewards }: { rewards: RewardConfig[] }) {
-  const { config, addReward, saveRewardEdits } = useGame();
-  const sortedRewards = [...rewards].sort(sortRewards);
+  const { config, addReward, saveRewardEdit, deleteReward, dispatch } =
+    useGame();
+  const [deletedRewardIds, setDeletedRewardIds] = useState<string[]>([]);
+  const visibleRewards = rewards.filter(
+    (reward) => !deletedRewardIds.includes(reward.id),
+  );
+  const sortedRewards = [...visibleRewards].sort(sortRewards);
   const tierGroups = getRewardTierGroups(sortedRewards);
   const [drafts, setDrafts] = useState(() => createRewardDrafts(rewards));
   const [errors, setErrors] = useState<Record<string, RewardDraftError>>({});
-
-  function cancel() {
-    setDrafts(createRewardDrafts(rewards));
-    setErrors({});
-  }
 
   function addDraftReward() {
     const reward = addReward();
@@ -61,43 +62,24 @@ function RewardEditList({ rewards }: { rewards: RewardConfig[] }) {
     }));
   }
 
-  function save() {
-    const nextErrors: Record<string, RewardDraftError> = {};
-    sortedRewards.forEach((reward) => {
-      const draft = drafts[reward.id] ?? createRewardDraft(reward);
-      const name = draft.name.trim();
-      const value = Number(draft.value);
-      const valueIsAllowed = config.rewardValueOptions.includes(
-        value as RewardCoinValue,
-      );
-      nextErrors[reward.id] = {
-        name: name ? "" : "Reward name is required.",
-        value: valueIsAllowed ? "" : "Reward value is required.",
-      };
-    });
-    setErrors(nextErrors);
-    if (
-      Object.values(nextErrors).some((error) => error.name || error.value)
-    ) {
-      return;
-    }
-    saveRewardEdits(sortedRewards.map((reward) => {
-      const draft = drafts[reward.id] ?? createRewardDraft(reward);
-      return {
-        rewardId: reward.id,
-        name: draft.name.trim(),
-        value: Number(draft.value) as RewardCoinValue,
-      };
-    }));
+  function saveRewardDraft(rewardId: string, draft: RewardDraft) {
+    const name = draft.name.trim();
+    const value = Number(draft.value);
+    const valueIsAllowed = config.rewardValueOptions.includes(
+      value as RewardCoinValue,
+    );
+    const nextError = {
+      name: name ? "" : "Reward name is required.",
+      value: valueIsAllowed ? "" : "Reward value is required.",
+    };
+    setErrors((current) => ({ ...current, [rewardId]: nextError }));
+    if (nextError.name || nextError.value) return;
+    saveRewardEdit(rewardId, name, value as RewardCoinValue, draft.type);
   }
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap justify-end gap-3">
-        <Button onClick={cancel}>Cancel</Button>
-        <Button onClick={save} variant="primary">
-          Save
-        </Button>
         <Button aria-label="Add reward" onClick={addDraftReward} variant="primary">
           +
         </Button>
@@ -115,6 +97,31 @@ function RewardEditList({ rewards }: { rewards: RewardConfig[] }) {
                   onChange={(draft) =>
                     setDrafts((current) => ({ ...current, [reward.id]: draft }))
                   }
+                  onSave={(draft) => saveRewardDraft(reward.id, draft)}
+                  onDelete={() => {
+                    deleteReward(reward.id);
+                    setDeletedRewardIds((current) =>
+                      current.includes(reward.id)
+                        ? current
+                        : [...current, reward.id],
+                    );
+                    dispatch({
+                      type: "DELETE_REWARD",
+                      rewardId: reward.id,
+                      config,
+                    });
+                    setDrafts((current) => {
+                      const nextDrafts = { ...current };
+                      delete nextDrafts[reward.id];
+                      return nextDrafts;
+                    });
+                    setErrors((current) => {
+                      const nextErrors = { ...current };
+                      delete nextErrors[reward.id];
+                      return nextErrors;
+                    });
+                  }}
+                  canDelete={visibleRewards.length > 1}
                   reward={reward}
                   rewardValueOptions={config.rewardValueOptions}
                 />
@@ -130,6 +137,7 @@ function RewardEditList({ rewards }: { rewards: RewardConfig[] }) {
 type RewardDraft = {
   name: string;
   value: string;
+  type: RewardType;
 };
 
 type RewardDraftError = {
@@ -143,6 +151,7 @@ function createRewardDraft(reward: RewardConfig): RewardDraft {
   return {
     name: reward.name,
     value: String(reward.coinValue),
+    type: reward.type,
   };
 }
 
@@ -157,14 +166,26 @@ function RewardEditCard({
   draft,
   errors,
   onChange,
+  onSave,
+  onDelete,
+  canDelete,
   rewardValueOptions,
 }: {
   reward: RewardConfig;
   draft: RewardDraft;
   errors: RewardDraftError;
   onChange(draft: RewardDraft): void;
+  onSave(draft: RewardDraft): void;
+  onDelete(): void;
+  canDelete: boolean;
   rewardValueOptions: RewardCoinValue[];
 }) {
+  useEffect(() => {
+    if (draft.name === reward.name) return;
+    const timeoutId = window.setTimeout(() => onSave(draft), 1000);
+    return () => window.clearTimeout(timeoutId);
+  }, [draft, onSave, reward.name]);
+
   return (
     <div className="space-y-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
       <Field error={errors.name} id={`reward-name-${reward.id}`} label="Reward name">
@@ -180,9 +201,11 @@ function RewardEditCard({
         <Select
           id={`reward-value-${reward.id}`}
           value={draft.value}
-          onChange={(event) =>
-            onChange({ ...draft, value: event.target.value })
-          }
+          onChange={(event) => {
+            const nextDraft = { ...draft, value: event.target.value };
+            onChange(nextDraft);
+            onSave(nextDraft);
+          }}
         >
           {rewardValueOptions.map((value) => (
             <option key={value} value={value}>
@@ -191,6 +214,33 @@ function RewardEditCard({
           ))}
         </Select>
       </Field>
+      <Field id={`reward-type-${reward.id}`} label="Reward type">
+        <Select
+          id={`reward-type-${reward.id}`}
+          value={draft.type}
+          onChange={(event) => {
+            const nextDraft = {
+              ...draft,
+              type: event.target.value as RewardType,
+            };
+            onChange(nextDraft);
+            onSave(nextDraft);
+          }}
+        >
+          <option value="SELLABLE">Sellable</option>
+          <option value="UNSELLABLE">Cannot be sold</option>
+        </Select>
+      </Field>
+      <div className="flex justify-end">
+        <Button
+          aria-label={`Delete ${reward.name}`}
+          disabled={!canDelete}
+          onClick={onDelete}
+          variant="danger"
+        >
+          Delete
+        </Button>
+      </div>
     </div>
   );
 }

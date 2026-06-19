@@ -1,13 +1,17 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { ToastProvider } from "@/components/ui/ToastProvider";
+import gameData from "@/features/config/game-data.json";
+import type { EditableGameData } from "@/features/config/editableGameData";
 import { GameProvider } from "./GameProvider";
+import { GamePageClient } from "./GamePageClient";
 import { BoardTab } from "./board/BoardTab";
 import { ShopTab } from "./shop/ShopTab";
 import { validConfig } from "@/test/fixtures/configs";
 import type {
   GameConfig,
+  PowerUpType,
   RewardCoinValue,
 } from "@/features/config/configTypes";
 
@@ -19,6 +23,7 @@ function renderGame(
       questionId: string,
       question: string,
       answer: string,
+      powerUpType: PowerUpType | null,
     ) => void;
     saveRewardEdit?: (
       rewardId: string,
@@ -30,8 +35,10 @@ function renderGame(
         rewardId: string;
         name: string;
         value: RewardCoinValue;
+        type: "SELLABLE" | "UNSELLABLE";
       }>,
     ) => void;
+    deleteReward?: (rewardId: string) => void;
     config?: GameConfig;
   } = {},
 ) {
@@ -43,6 +50,7 @@ function renderGame(
         saveQuestionEdit={options.saveQuestionEdit}
         saveRewardEdit={options.saveRewardEdit}
         saveRewardEdits={options.saveRewardEdits}
+        deleteReward={options.deleteReward}
       >
         {children}
       </GameProvider>
@@ -51,6 +59,32 @@ function renderGame(
 }
 
 describe("game components", () => {
+  it("opens a Rules tab with the current game instructions", async () => {
+    render(
+      <ToastProvider>
+        <GamePageClient
+          initialEditMode={false}
+          initialGameDataResult={{
+            valid: true,
+            data: gameData as EditableGameData,
+          }}
+        />
+      </ToastProvider>,
+    );
+
+    await userEvent.click(screen.getByRole("tab", { name: "Rules" }));
+
+    expect(
+      screen.getByRole("heading", { name: "How to Play" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("A normal spin costs 20 coins.")).toBeInTheDocument();
+    expect(screen.getByText("Double balance")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Rules" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+  });
+
   it("renders columns in configured order", () => {
     renderGame(<BoardTab />);
     const headings = screen.getAllByText(/History|Food/);
@@ -69,49 +103,47 @@ describe("game components", () => {
     await userEvent.click(
       screen.getByRole("button", { name: "Reveal Answer" }),
     );
+    expect(screen.getByRole("button", { name: "Correct" })).toHaveClass(
+      "bg-[var(--success)]",
+    );
+    expect(screen.getByRole("button", { name: "Incorrect" })).toHaveClass(
+      "bg-[var(--secondary)]",
+    );
     expect(screen.getByText("Capital of Canada?")).toBeInTheDocument();
     expect(screen.getByText("Ottawa")).toBeInTheDocument();
   });
 
-  it("discovers mystery gift only after answering the powered cell correctly", async () => {
-    const config: GameConfig = {
-      ...validConfig,
-      questions: validConfig.questions.map((question) =>
-        question.id === "question-history-20"
-          ? { ...question, powerUp: { type: "MYSTERY_GIFT" } }
-          : question,
-      ),
-    };
-    renderGame(<BoardTab />, { config });
-
-    expect(screen.queryByText("Mystery Gift:")).not.toBeInTheDocument();
-    expect(
-      screen.queryByText("Mystery Gift Discovered 🎁"),
-    ).not.toBeInTheDocument();
-    expect(screen.queryByTestId("power-up-confetti")).not.toBeInTheDocument();
+  it("disables gameplay tabs while the wheel is spinning", async () => {
+    render(
+      <ToastProvider>
+        <GamePageClient
+          initialEditMode={false}
+          initialGameDataResult={{
+            valid: true,
+            data: gameData as EditableGameData,
+          }}
+        />
+      </ToastProvider>,
+    );
     await userEvent.click(
       screen.getAllByRole("button", { name: "20 coins" })[0],
     );
-    expect(screen.queryByText("Mystery Gift:")).not.toBeInTheDocument();
-    expect(
-      screen.queryByText("Mystery Gift Discovered 🎁"),
-    ).not.toBeInTheDocument();
-    expect(screen.queryByTestId("power-up-confetti")).not.toBeInTheDocument();
     await userEvent.click(
       screen.getByRole("button", { name: "Reveal Answer" }),
     );
     await userEvent.click(screen.getByRole("button", { name: "Correct" }));
-    expect(screen.getByText("Mystery Gift Discovered 🎁")).toBeInTheDocument();
-    expect(screen.getByTestId("power-up-confetti")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("tab", { name: "Wheel" }));
     await userEvent.click(
-      screen.getByRole("button", { name: "Close Mystery Gift" }),
+      screen.getByRole("button", { name: "Spin the wheel" }),
     );
-    expect(
-      screen.queryByText("Mystery Gift Discovered 🎁"),
-    ).not.toBeInTheDocument();
+
+    expect(screen.getByRole("tab", { name: "Board" })).toBeDisabled();
+    expect(screen.getByRole("tab", { name: "Wheel" })).toBeDisabled();
+    expect(screen.getByRole("tab", { name: "Shop" })).toBeDisabled();
+    expect(screen.getByRole("tab", { name: "Rules" })).toBeDisabled();
   });
 
-  it("does not show confetti when a non-mystery power-up card first opens", async () => {
+  it("shows non-mystery power-up copy when a powered card first opens", async () => {
     const config: GameConfig = {
       ...validConfig,
       questions: validConfig.questions.map((question) =>
@@ -125,8 +157,53 @@ describe("game components", () => {
     await userEvent.click(
       screen.getAllByRole("button", { name: "20 coins" })[0],
     );
-    expect(screen.getByText("Double Balance:")).toBeInTheDocument();
-    expect(screen.queryByTestId("power-up-confetti")).not.toBeInTheDocument();
+    expect(screen.getByText("Power Up:")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveClass("text-[1.225rem]");
+  });
+
+  it("applies double-balance power-up to the total after correct-answer coins", async () => {
+    const config: GameConfig = {
+      ...validConfig,
+      questions: validConfig.questions.map((question) =>
+        question.id === "question-history-20"
+          ? { ...question, powerUp: { type: "DOUBLE_BALANCE_ON_CORRECT" } }
+          : question,
+      ),
+    };
+    renderGame(<BoardTab />, { config });
+
+    await userEvent.click(
+      screen.getAllByRole("button", { name: "20 coins" })[0],
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Reveal Answer" }));
+    await userEvent.click(screen.getByRole("button", { name: "Correct" }));
+
+    expect(screen.getByLabelText("40 coins")).toBeInTheDocument();
+  });
+
+  it("applies halve-balance power-up to the unchanged total after an incorrect answer", async () => {
+    const config: GameConfig = {
+      ...validConfig,
+      questions: validConfig.questions.map((question) =>
+        question.id === "question-food-5"
+          ? { ...question, powerUp: { type: "HALVE_BALANCE_ON_INCORRECT" } }
+          : question,
+      ),
+    };
+    renderGame(<BoardTab />, { config });
+
+    await userEvent.click(
+      screen.getAllByRole("button", { name: "20 coins" })[0],
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Reveal Answer" }));
+    await userEvent.click(screen.getByRole("button", { name: "Correct" }));
+    await userEvent.click(
+      screen.getAllByRole("button", { name: "20 coins" })[0],
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Reveal Answer" }));
+    await userEvent.click(screen.getByRole("button", { name: "Incorrect" }));
+
+    expect(screen.getByLabelText("10 coins")).toBeInTheDocument();
   });
 
   it("correct and incorrect update board cells", async () => {
@@ -153,7 +230,7 @@ describe("game components", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows a pulsing board message when the correct streak bonus is active", async () => {
+  it("shows the streak and next bonus when the correct streak bonus is active", async () => {
     const config: GameConfig = {
       ...validConfig,
       questions: [
@@ -179,7 +256,7 @@ describe("game components", () => {
       );
       await userEvent.click(screen.getByRole("button", { name: "Correct" }));
     }
-    expect(screen.queryByText(/\+10 streak bonus active/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Correct Streak/)).not.toBeInTheDocument();
 
     await userEvent.click(
       screen.getAllByRole("button", { name: "20 coins" })[0],
@@ -189,11 +266,10 @@ describe("game components", () => {
     );
     await userEvent.click(screen.getByRole("button", { name: "Correct" }));
 
-    const bonusMessage = screen.getByText(
-      "+10 streak bonus active - 3 correct streak",
-    );
+    const bonusMessage = screen.getByRole("status");
+    expect(bonusMessage).toHaveTextContent("Correct Streak: 3");
+    expect(bonusMessage).toHaveTextContent("Next bonus: +5 coins");
     expect(bonusMessage).toBeInTheDocument();
-    expect(bonusMessage).toHaveClass("animate-pulse");
   });
 
   it("buy disables when unaffordable, then buy/sell confirmation updates inventory and coins", async () => {
@@ -245,16 +321,25 @@ describe("game components", () => {
       rewards: [
         validConfig.rewards[0],
         {
+          id: "reward-silver",
+          name: "Silver Prize",
+          description: "",
+          coinValue: 50,
+          type: "SELLABLE",
+        },
+        {
           id: "reward-dinner",
           name: "Dinner",
           description: "",
           coinValue: 70,
+          type: "SELLABLE",
         },
         {
           id: "reward-grand-prize",
           name: "Grand Prize",
           description: "",
           coinValue: 100,
+          type: "SELLABLE",
         },
       ],
     };
@@ -318,6 +403,28 @@ describe("game components", () => {
       "question-history-20",
       "New question?",
       "New answer",
+      null,
+    );
+  });
+
+  it("board edit save can select a power up", async () => {
+    const saveQuestionEdit = vi.fn();
+    renderGame(<BoardTab />, { isEditMode: true, saveQuestionEdit });
+
+    await userEvent.click(
+      screen.getAllByRole("button", { name: "20 coins" })[0],
+    );
+    await userEvent.selectOptions(
+      screen.getByLabelText("Power up"),
+      "BONUS_ON_CORRECT",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(saveQuestionEdit).toHaveBeenCalledWith(
+      "question-history-20",
+      "Capital of Canada?",
+      "Ottawa",
+      "BONUS_ON_CORRECT",
     );
   });
 
@@ -335,51 +442,79 @@ describe("game components", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("reward edit save validates and saves one reward", async () => {
-    const saveRewardEdits = vi.fn();
-    renderGame(<ShopTab />, { isEditMode: true, saveRewardEdits });
+  it("reward edit autosaves text changes after a debounce", async () => {
+    const saveRewardEdit = vi.fn();
+    renderGame(<ShopTab />, { isEditMode: true, saveRewardEdit });
 
     const nameInput = screen.getAllByLabelText("Reward name", {
       selector: "input",
     })[0];
+    expect(screen.queryByRole("button", { name: "Save" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Cancel" }),
+    ).not.toBeInTheDocument();
+
     await userEvent.clear(nameInput);
-    await userEvent.click(screen.getByRole("button", { name: "Save" }));
-    expect(screen.getByText("Reward name is required.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Reward name is required.", {}, { timeout: 1500 }),
+    ).toBeInTheDocument();
+    expect(saveRewardEdit).not.toHaveBeenCalled();
 
     await userEvent.type(nameInput, "Green Tea");
+    expect(saveRewardEdit).not.toHaveBeenCalled();
+    await waitFor(
+      () =>
+        expect(saveRewardEdit).toHaveBeenCalledWith(
+          "reward-tea",
+          "Green Tea",
+          40,
+          "SELLABLE",
+        ),
+      { timeout: 1500 },
+    );
+  });
+
+  it("reward edit autosaves select changes immediately", async () => {
+    const saveRewardEdit = vi.fn();
+    renderGame(<ShopTab />, { isEditMode: true, saveRewardEdit });
+
+    await userEvent.selectOptions(screen.getAllByLabelText("Reward value")[0], "50");
+    expect(saveRewardEdit).toHaveBeenCalledWith(
+      "reward-tea",
+      "Tea",
+      50,
+      "SELLABLE",
+    );
+
     await userEvent.selectOptions(
-      screen.getAllByLabelText("Reward value")[0],
-      "50",
+      screen.getAllByLabelText("Reward type")[0],
+      "UNSELLABLE",
     );
-    await userEvent.click(screen.getByRole("button", { name: "Save" }));
-    expect(saveRewardEdits).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        { rewardId: "reward-tea", name: "Green Tea", value: 50 },
-      ]),
+    expect(saveRewardEdit).toHaveBeenCalledWith(
+      "reward-tea",
+      "Tea",
+      50,
+      "UNSELLABLE",
     );
   });
 
-  it("reward edit cancel resets all draft reward changes", async () => {
-    const saveRewardEdits = vi.fn();
-    renderGame(<ShopTab />, { isEditMode: true, saveRewardEdits });
+  it("reward edit delete removes a reward from the edit list", async () => {
+    const deleteReward = vi.fn();
+    renderGame(<ShopTab />, { isEditMode: true, deleteReward });
 
-    const nameInput = screen.getAllByLabelText("Reward name", {
-      selector: "input",
-    })[0];
-    await userEvent.clear(nameInput);
-    await userEvent.type(nameInput, "Draft Tea");
-    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    await userEvent.click(screen.getByRole("button", { name: "Delete Tea" }));
 
-    expect(nameInput).toHaveValue("Tea");
-    expect(saveRewardEdits).not.toHaveBeenCalled();
+    expect(deleteReward).toHaveBeenCalledWith("reward-tea");
+    expect(screen.queryByDisplayValue("Tea")).not.toBeInTheDocument();
   });
 
-  it("reward edit add button creates a Blind Box reward", async () => {
+  it("reward edit add button creates a placeholder reward", async () => {
     const addReward = vi.fn(() => ({
       id: "reward-added",
-      name: "Blind Box",
+      name: "A Placeholder",
       description: "",
-      coinValue: 60 as const,
+      coinValue: 30 as const,
+      type: "SELLABLE" as const,
     }));
     render(
       <ToastProvider>

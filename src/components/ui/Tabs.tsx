@@ -5,11 +5,13 @@ export function Tabs<T extends string>({
   value,
   onChange,
   ariaLabel,
+  disabled = false,
 }: {
   tabs: { value: T; label: string }[];
   value: T;
   onChange(value: T): void;
   ariaLabel: string;
+  disabled?: boolean;
 }) {
   return (
     <div aria-label={ariaLabel} className="flex gap-2" role="tablist">
@@ -21,6 +23,7 @@ export function Tabs<T extends string>({
               ? "bg-[var(--primary)] !text-[var(--primary-foreground)]"
               : ""
           }
+          disabled={disabled}
           key={tab.value}
           onClick={() => onChange(tab.value)}
           role="tab"

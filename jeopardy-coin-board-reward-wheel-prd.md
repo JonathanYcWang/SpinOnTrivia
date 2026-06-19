@@ -555,7 +555,8 @@ Supported power-up types:
 - `HALVE_BALANCE_ON_INCORRECT`
 - `MYSTERY_GIFT`
 - `BONUS_ON_CORRECT`
-- `DISABLE_SELLING_ON_INCORRECT`
+- `DOUBLE_SPIN_COST_ON_INCORRECT`
+- `HALVE_SPIN_COST_ON_CORRECT`
 
 ### 11.2 Power-Up Reveal
 
@@ -577,7 +578,8 @@ Power-up effects:
 - `HALVE_BALANCE_ON_INCORRECT`: if the answer is marked Incorrect, halve the current coin balance and round up.
 - `MYSTERY_GIFT`: reveal a Mystery Gift message when the question is selected. This is display-only and must not change coins, rewards, inventory, shop, or wheel state.
 - `BONUS_ON_CORRECT`: if the answer is marked Correct, first award normal question coins, then add 10 bonus coins.
-- `DISABLE_SELLING_ON_INCORRECT`: if the answer is marked Incorrect, disable selling until the next correct answer.
+- `DOUBLE_SPIN_COST_ON_INCORRECT`: if the answer is marked Incorrect, double the cost of the next wheel spin.
+- `HALVE_SPIN_COST_ON_CORRECT`: if the answer is marked Correct, halve the cost of the next wheel spin.
 
 ### 11.4 Correct Streak Multiplier
 
@@ -598,21 +600,20 @@ Rules:
 - Incorrect answers reset `correctStreakCount` to `0`.
 - New Game resets streak state.
 
-### 11.5 Selling Lock
+### 11.5 Next Spin Cost
 
-Selling lock is triggered only by `DISABLE_SELLING_ON_INCORRECT`.
+The next spin cost can be changed by a spin-cost power up.
 
 Runtime state must track:
 
-- `isSellingLocked`
+- `nextSpinCost`
 
 Rules:
 
-- If a cell with `DISABLE_SELLING_ON_INCORRECT` is marked Incorrect, selling is disabled.
-- While selling is locked, Sell actions are disabled.
-- The Sell tab should explain that selling is locked until the next correct answer.
-- The selling lock clears on the next Correct answer.
-- New Game resets selling lock state.
+- A matching incorrect power up sets the next spin cost to 40 coins.
+- A matching correct power up sets the next spin cost to 10 coins.
+- Starting a spin consumes the modified price and resets the next spin cost to 20 coins.
+- New Game resets the next spin cost to 20 coins.
 
 ---
 
@@ -952,10 +953,10 @@ Use an adapter first, then simplify runtime types after behavior is stable.
 1. Extend `Data.js` cell parsing and validation to support one optional `powerUp`.
 2. Reject unsupported power-up types.
 3. Reveal configured power ups in the question modal only after the cell is selected.
-4. Add runtime state for `correctStreakCount`, `isStreakMultiplierActive`, and `isSellingLocked`.
+4. Add runtime state for `correctStreakCount`, `isStreakMultiplierActive`, and `nextSpinCost`.
 5. Apply normal question scoring before power-up coin effects.
 6. Apply global streak multiplier rules for consecutive correct answers.
-7. Apply selling lock rules for `DISABLE_SELLING_ON_INCORRECT`.
+7. Apply next-spin cost power-up rules.
 8. Reset power-up runtime state on New Game.
 
 ### Phase 8: Tests and Verification
@@ -971,7 +972,7 @@ Use an adapter first, then simplify runtime types after behavior is stable.
 9. Add tests that saved edits appear in gameplay views.
 10. Add tests for valid and invalid power-up config.
 11. Add tests for modal power-up reveal timing.
-12. Add tests for double balance, halve balance, Mystery Gift, bonus 10, streak multiplier, and selling lock behavior.
+12. Add tests for double balance, halve balance, Mystery Gift, bonus 10, streak multiplier, and next-spin cost behavior.
 13. Update e2e flow to start a game without Admin dependency.
 14. Run typecheck, lint, unit tests, e2e tests, and production build.
 
@@ -1009,6 +1010,6 @@ The refactor is complete when:
 - `BONUS_ON_CORRECT` awards 10 bonus coins only on Correct answers.
 - The third consecutive Correct answer activates and receives the 2x streak multiplier.
 - Incorrect answers reset streak state and disable the streak multiplier.
-- `DISABLE_SELLING_ON_INCORRECT` disables selling only after that configured cell is answered Incorrect.
-- Selling lock clears on the next Correct answer.
-- New Game resets `correctStreakCount`, `isStreakMultiplierActive`, and `isSellingLocked`.
+- Spin-cost power ups change only the next spin after the matching answer result.
+- Starting a spin resets its cost to the normal price.
+- New Game resets `correctStreakCount`, `isStreakMultiplierActive`, and `nextSpinCost`.
