@@ -32,15 +32,25 @@ export function RewardCard({
         <h3 className="truncate text-lg font-semibold" title={reward.name}>
           {reward.name}
         </h3>
-        <p className="mt-1 text-sm font-medium text-[var(--primary)]">
-          {mode === "sell" ? "Sell Value: " : null}
-          <CoinDisplay value={value} />
-        </p>
-        {reward.type === "UNSELLABLE" ? (
+        {mode === "buy" ? (
+          <>
+            <CoinDisplay value={value} />
+            {reward.type !== "SELLABLE" && (
+              <p className="mt-1 text-xs tracking-wide text-[var(--text-muted)]">
+                This item cannot be sold back later
+              </p>
+            )}
+          </>
+        ) : reward.type === "SELLABLE" ? (
+          <p className="mt-1 text-sm font-medium text-[var(--primary)]">
+            Sell Value:&ensp;
+            <CoinDisplay value={value} />
+          </p>
+        ) : (
           <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">
             Cannot be sold
           </p>
-        ) : null}
+        )}
       </div>
       {reward.description ? (
         <div className="text-sm leading-6 text-[var(--text-muted)]">

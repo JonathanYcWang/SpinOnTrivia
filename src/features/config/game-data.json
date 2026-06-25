@@ -316,7 +316,8 @@
     {
       "id": "reward-alfies",
       "name": "Alfie's",
-      "value": 80
+      "value": 90,
+      "type": "SELLABLE"
     },
     {
       "id": "reward-good-brother-skewers",
@@ -370,20 +371,20 @@
     },
     {
       "id": "league-RP",
-      "name": "Buy $30 of RP",
+      "name": "$30 of RP",
       "value": 80,
       "type": "SELLABLE"
     },
     {
       "id": "snacks-basket",
-      "name": "Snack Speed Run (5min)",
-      "value": 80,
+      "name": "Snackies Speed Run",
+      "value": 100,
       "type": "SELLABLE"
     },
     {
       "id": "reward-e9cc9cd6-6637-43e6-a388-38bc542d374b",
       "name": "Ride to Popmart",
-      "value": 30,
+      "value": 40,
       "type": "SELLABLE"
     },
     {
@@ -418,8 +419,8 @@
     },
     {
       "id": "reward-b1e55c03-03f6-4794-a96f-38840d9825c2",
-      "name": "Mystery Gift #4",
-      "value": 80,
+      "name": "Mystery Gift #6",
+      "value": 100,
       "type": "UNSELLABLE"
     },
     {
@@ -430,8 +431,8 @@
     },
     {
       "id": "reward-1ba8abd7-29ab-4eec-bd1c-a3777453d898",
-      "name": "Five TFT Games",
-      "value": 30,
+      "name": "3 TFT Games",
+      "value": 40,
       "type": "SELLABLE"
     },
     {
@@ -443,7 +444,7 @@
     {
       "id": "reward-f518e618-9ddf-44ba-a74e-8a409844161f",
       "name": "Drive > Bike Veto",
-      "value": 30,
+      "value": 60,
       "type": "SELLABLE"
     },
     {
@@ -456,6 +457,48 @@
       "id": "reward-24337ba1-4bfb-4fd0-b47f-82b6a0eb4b06",
       "name": "TCP Card Pack",
       "value": 60,
+      "type": "SELLABLE"
+    },
+    {
+      "id": "reward-e652310d-abf8-4342-b466-6483b2cc636c",
+      "name": "Flower Bouqet",
+      "value": 90,
+      "type": "SELLABLE"
+    },
+    {
+      "id": "reward-f69e2564-ea96-452c-924d-662ffd5395e5",
+      "name": "After 7 Espresso Martini",
+      "value": 70,
+      "type": "SELLABLE"
+    },
+    {
+      "id": "reward-c12efbc4-f26a-44d5-af9c-8fd16fced031",
+      "name": "Chore Day",
+      "value": 80,
+      "type": "SELLABLE"
+    },
+    {
+      "id": "reward-715add48-babc-40f4-9f42-b1b1821da8d0",
+      "name": "Mystery Gift #5",
+      "value": 80,
+      "type": "UNSELLABLE"
+    },
+    {
+      "id": "reward-24fadd17-c367-40a9-ac96-c1131cd7dbc7",
+      "name": "Mystery Gift #4",
+      "value": 70,
+      "type": "UNSELLABLE"
+    },
+    {
+      "id": "reward-b7ce7593-ae19-43e6-bd20-18c4485e318e",
+      "name": "3 League Games",
+      "value": 40,
+      "type": "SELLABLE"
+    },
+    {
+      "id": "reward-57b30ed2-8280-4259-a8a1-de8ace444175",
+      "name": "Free \"Uber\" Ride",
+      "value": 40,
       "type": "SELLABLE"
     }
   ],
